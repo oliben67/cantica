@@ -37,28 +37,30 @@ cantica/
 
 ## Architecture
 
-```
-┌──────────────┐   ┌────────────────┐   ┌───────────────────┐
-│  cantica CLI │   │  Web UI        │   │  songbook / IDEs  │
-│  push/pull   │   │  (React SPA)   │   │  cantica:// URIs  │
-│  search/diff │   │  browse/search │   │  SDK / HTTP       │
-└──────┬───────┘   └───────┬────────┘   └─────────┬─────────┘
-       │                   │   HTTP /v1            │
-       └───────────────────▼───────────────────────┘
-                   ┌───────────────────┐
-                   │  FastAPI backend  │
-                   │                  │
-                   │  VersionStore    │  ← git-style commits,
-                   │  BlobStore       │    branches, tags, diffs
-                   │  TemplateEngine  │
-                   │  CommunityService│
-                   └────────┬─────────┘
-                            │
-              ┌─────────────┴─────────────┐
-              │  SQLite (local/self-host)  │
-              │  PostgreSQL + pgvector     │
-              │  Content-addressable blobs │
-              └────────────────────────────┘
+```mermaid
+graph TD
+    CLI["cantica CLI<br/>push · pull · search · diff"]
+    UI["Web UI<br/>React SPA · browse · search"]
+    SDK["songbook / IDEs<br/>cantica:// URIs · SDK · HTTP"]
+
+    CLI -->|HTTP /v1| API
+    UI  -->|HTTP /v1| API
+    SDK -->|HTTP /v1| API
+
+    subgraph API["FastAPI Backend"]
+        VS["VersionStore<br/>commits · branches · tags · diffs"]
+        BS["BlobStore<br/>content-addressable objects"]
+        TE["TemplateEngine<br/>variable rendering · validation"]
+        CS["CommunityService<br/>stars · forks · comments · collections"]
+    end
+
+    API --> DB
+
+    subgraph DB["Storage"]
+        SQ["SQLite (local / self-hosted)"]
+        PG["PostgreSQL + pgvector"]
+        BL["Content-addressable blobs"]
+    end
 ```
 
 ### Key concepts
