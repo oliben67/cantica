@@ -1,0 +1,6 @@
+[submodule "cantica-server"]
+	path = cantica-server
+	url = ../cantica-server
+[submodule "cantica-frontend"]
+	path = cantica-frontend
+	url = ../cantica-frontend
