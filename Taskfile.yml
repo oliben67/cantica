@@ -1,0 +1,55 @@
+# https://taskfile.dev  —  requires Task ≥ 3.28
+version: '3'
+
+includes:
+  api:
+    taskfile: ./cantica-api/Taskfile.yml
+    dir: ./cantica-api
+  ui:
+    taskfile: ./cantica-frontend/Taskfile.yml
+    dir: ./cantica-frontend
+
+# ── Default ────────────────────────────────────────────────────────────────
+tasks:
+  default:
+    desc: List all available tasks
+    silent: true
+    cmd: task --list
+
+  # ── Combined workflows ────────────────────────────────────────────────────
+  check:
+    desc: Run all quality gates across API and frontend
+    cmds:
+      - task: api:check
+      - task: ui:check
+
+  fix:
+    desc: Auto-fix all lint issues and reformat across API and frontend
+    cmds:
+      - task: api:fix
+      - task: ui:lint
+
+  dev:
+    desc: Start the full development environment (API + UI concurrently)
+    deps:
+      - task: api:serve
+      - task: ui:dev
+
+  ci:
+    desc: Full CI pipeline for all sub-projects
+    cmds:
+      - task: api:ci
+      - task: ui:ci
+
+  # ── Clean ─────────────────────────────────────────────────────────────────
+  clean:
+    desc: Remove build artefacts and caches across all sub-projects
+    cmds:
+      - task: api:clean
+      - task: ui:clean
+
+  clean:all:
+    desc: Remove everything including venvs and node_modules across all sub-projects
+    cmds:
+      - task: api:clean:all
+      - task: ui:clean:all

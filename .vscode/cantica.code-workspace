@@ -1,12 +1,16 @@
 {
 	"folders": [
 		{
-			"name": "cantica-server",
-			"path": "/home/osteck/Sources/cantica-server"
+			"name": "api",
+			"path": "../../cantica-api"
 		},
 		{
-			"name": "cantica-frontend",
-			"path": "/home/osteck/Sources/cantica-frontend"
+			"name": "frontend",
+			"path": "../../cantica-frontend"
+		},
+		{
+			"name": ".",
+			"path": ".."
 		}
 	],
 	"settings": {}

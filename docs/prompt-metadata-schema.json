@@ -1,0 +1,284 @@
+{
+  "$defs": {
+    "Branch": {
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "prompt_id": {
+          "title": "Prompt Id",
+          "type": "string"
+        },
+        "head_sha": {
+          "title": "Head Sha",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "updated_at": {
+          "format": "date-time",
+          "title": "Updated At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "prompt_id",
+        "head_sha"
+      ],
+      "title": "Branch",
+      "type": "object"
+    },
+    "Namespace": {
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "description": {
+          "default": "",
+          "title": "Description",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "Namespace",
+      "type": "object"
+    },
+    "Prompt": {
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "namespace": {
+          "title": "Namespace",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "description": {
+          "default": "",
+          "title": "Description",
+          "type": "string"
+        },
+        "tags": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Tags",
+          "type": "array"
+        },
+        "model_hints": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Model Hints",
+          "type": "array"
+        },
+        "license": {
+          "default": "MIT",
+          "title": "License",
+          "type": "string"
+        },
+        "visibility": {
+          "$ref": "#/$defs/Visibility",
+          "default": "public"
+        },
+        "variables": {
+          "items": {
+            "$ref": "#/$defs/VariableSchema"
+          },
+          "title": "Variables",
+          "type": "array"
+        },
+        "star_count": {
+          "default": 0,
+          "title": "Star Count",
+          "type": "integer"
+        },
+        "fork_count": {
+          "default": 0,
+          "title": "Fork Count",
+          "type": "integer"
+        },
+        "default_branch": {
+          "default": "main",
+          "title": "Default Branch",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "updated_at": {
+          "format": "date-time",
+          "title": "Updated At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "namespace",
+        "name"
+      ],
+      "title": "Prompt",
+      "type": "object"
+    },
+    "Tag": {
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "prompt_id": {
+          "title": "Prompt Id",
+          "type": "string"
+        },
+        "sha": {
+          "title": "Sha",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "prompt_id",
+        "sha"
+      ],
+      "title": "Tag",
+      "type": "object"
+    },
+    "VariableSchema": {
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "type": {
+          "default": "string",
+          "title": "Type",
+          "type": "string"
+        },
+        "description": {
+          "default": "",
+          "title": "Description",
+          "type": "string"
+        },
+        "default": {
+          "default": null,
+          "title": "Default"
+        },
+        "required": {
+          "default": false,
+          "title": "Required",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "VariableSchema",
+      "type": "object"
+    },
+    "Version": {
+      "properties": {
+        "sha": {
+          "title": "Sha",
+          "type": "string"
+        },
+        "prompt_id": {
+          "title": "Prompt Id",
+          "type": "string"
+        },
+        "branch": {
+          "default": "main",
+          "title": "Branch",
+          "type": "string"
+        },
+        "parent_sha": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Parent Sha"
+        },
+        "message": {
+          "title": "Message",
+          "type": "string"
+        },
+        "author": {
+          "title": "Author",
+          "type": "string"
+        },
+        "content": {
+          "title": "Content",
+          "type": "string"
+        },
+        "variables": {
+          "items": {
+            "$ref": "#/$defs/VariableSchema"
+          },
+          "title": "Variables",
+          "type": "array"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "tags": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Tags",
+          "type": "array"
+        }
+      },
+      "required": [
+        "sha",
+        "prompt_id",
+        "message",
+        "author",
+        "content"
+      ],
+      "title": "Version",
+      "type": "object"
+    },
+    "Visibility": {
+      "enum": [
+        "public",
+        "private",
+        "unlisted",
+        "team"
+      ],
+      "title": "Visibility",
+      "type": "string"
+    }
+  },
+  "title": "Cantica Prompt Metadata Schema",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "JSON Schema for Cantica prompt metadata and versioning objects."
+}
