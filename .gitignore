@@ -1,0 +1,19 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Atlas dev database (temporary file used during migration planning)
+atlas-dev.db
+
+# Copilot session logs (local only)
+.copilot/
+
+# VS Code settings and workspace files
+.vscode/

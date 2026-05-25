@@ -5,6 +5,10 @@
 			"path": "../../cantica-api"
 		},
 		{
+			"name": "ui",
+			"path": "../../cantica-ui"
+		},
+		{
 			"name": "frontend",
 			"path": "../../cantica-frontend"
 		},
@@ -13,5 +17,26 @@
 			"path": ".."
 		}
 	],
-	"settings": {}
+	"settings": {
+		"files.trimFinalNewlines": true,
+		"files.trimTrailingWhitespace": true,
+		"editor.rulers": [
+			{
+				"color": "#a5eafa",
+				"column": 80
+			},
+			{
+				"color": "#fa9d9d",
+				"column": 120
+			}
+		],
+		"editor.bracketPairColorization.enabled": true,
+		"python-envs.pythonProjects": [
+			{
+				"path": ".",
+				"envManager": "ms-python.python:venv",
+				"packageManager": "ms-python.python:pip",
+			}
+		],
+	}
 }

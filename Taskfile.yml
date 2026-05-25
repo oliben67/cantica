@@ -27,7 +27,7 @@ tasks:
     desc: Auto-fix all lint issues and reformat across API and frontend
     cmds:
       - task: api:fix
-      - task: ui:lint
+      - task: ui:lint:fix
 
   dev:
     desc: Start the full development environment (API + UI concurrently)
