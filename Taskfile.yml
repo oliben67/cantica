@@ -5,9 +5,6 @@ includes:
   api:
     taskfile: ./cantica-api/Taskfile.yml
     dir: ./cantica-api
-  ui:
-    taskfile: ./cantica-frontend/Taskfile.yml
-    dir: ./cantica-frontend
   web:
     taskfile: ./cantica-web/Taskfile.yml
     dir: ./cantica-web
@@ -27,7 +24,6 @@ tasks:
     desc: Run all quality gates across API and frontend
     cmds:
       - task: api:check
-      - task: ui:check
       - task: web:check
       - task: studio:check
 
@@ -35,21 +31,19 @@ tasks:
     desc: Auto-fix all lint issues and reformat across API and frontend
     cmds:
       - task: api:fix
-      - task: ui:lint:fix
       - task: web:lint:fix
+      - task: studio:fix
 
   dev:
     desc: Start the full development environment (API + UI concurrently)
     deps:
       - task: api:serve
-      - task: ui:dev
       - task: web:dev
 
   ci:
     desc: Full CI pipeline for all sub-projects
     cmds:
       - task: api:ci
-      - task: ui:ci
       - task: web:ci
       - task: studio:ci
 
@@ -58,7 +52,6 @@ tasks:
     desc: Remove build artefacts and caches across all sub-projects
     cmds:
       - task: api:clean
-      - task: ui:clean
       - task: web:clean
       - task: studio:clean
 
@@ -66,6 +59,5 @@ tasks:
     desc: Remove everything including venvs and node_modules across all sub-projects
     cmds:
       - task: api:clean:all
-      - task: ui:clean:all
       - task: web:clean:all
       - task: studio:clean:all
