@@ -11,6 +11,9 @@ includes:
   web:
     taskfile: ./cantica-web/Taskfile.yml
     dir: ./cantica-web
+  studio:
+    taskfile: ./cantica-studio/Taskfile.yml
+    dir: ./cantica-studio
 
 # ── Default ────────────────────────────────────────────────────────────────
 tasks:
@@ -26,6 +29,7 @@ tasks:
       - task: api:check
       - task: ui:check
       - task: web:check
+      - task: studio:check
 
   fix:
     desc: Auto-fix all lint issues and reformat across API and frontend
@@ -47,6 +51,7 @@ tasks:
       - task: api:ci
       - task: ui:ci
       - task: web:ci
+      - task: studio:ci
 
   # ── Clean ─────────────────────────────────────────────────────────────────
   clean:
@@ -55,6 +60,7 @@ tasks:
       - task: api:clean
       - task: ui:clean
       - task: web:clean
+      - task: studio:clean
 
   clean:all:
     desc: Remove everything including venvs and node_modules across all sub-projects
@@ -62,3 +68,4 @@ tasks:
       - task: api:clean:all
       - task: ui:clean:all
       - task: web:clean:all
+      - task: studio:clean:all

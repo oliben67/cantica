@@ -5,12 +5,12 @@
 			"path": "../../cantica-api"
 		},
 		{
-			"name": "ui",
-			"path": "../../cantica-ui"
+			"name": "studio",
+			"path": "../../cantica-studio"
 		},
 		{
-			"name": "frontend",
-			"path": "../../cantica-frontend"
+			"name": "web",
+			"path": "../../cantica-web"
 		},
 		{
 			"name": ".",

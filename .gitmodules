@@ -7,3 +7,6 @@
 [submodule "cantica-web"]
 	path = cantica-web
 	url = /home/osteck/Sources/cantica-project/cantica-web
+[submodule "cantica-studio"]
+	path = cantica-studio
+	url = /home/osteck/Sources/cantica-project/cantica-studio
