@@ -47,6 +47,58 @@ tasks:
       - task: web:ci
       - task: studio:ci
 
+  # ── Docker Compose ───────────────────────────────────────────────────────
+
+  up:
+    desc: Start all containers (detached)
+    cmd: docker compose up -d
+
+  down:
+    desc: Stop and remove all containers
+    cmd: docker compose down
+
+  build:
+    desc: Build all Docker images without starting
+    cmd: docker compose build
+
+  rebuild:
+    desc: Rebuild all images (no cache) and restart containers
+    cmds:
+      - docker compose build --no-cache
+      - docker compose up -d
+
+  restart:
+    desc: Restart all running containers
+    cmd: docker compose restart
+
+  restart:api:
+    desc: Rebuild and restart only the api container
+    cmds:
+      - docker compose build api
+      - docker compose up -d --no-deps api
+
+  restart:web:
+    desc: Rebuild and restart only the web container
+    cmds:
+      - docker compose build web
+      - docker compose up -d --no-deps web
+
+  logs:
+    desc: Follow logs for all containers
+    cmd: docker compose logs -f
+
+  logs:api:
+    desc: Follow api container logs
+    cmd: docker compose logs -f api
+
+  logs:web:
+    desc: Follow web container logs
+    cmd: docker compose logs -f web
+
+  ps:
+    desc: Show container status
+    cmd: docker compose ps
+
   # ── Clean ─────────────────────────────────────────────────────────────────
   clean:
     desc: Remove build artefacts and caches across all sub-projects

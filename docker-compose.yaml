@@ -1,0 +1,48 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: cantica
+      POSTGRES_PASSWORD: C@ntica
+      POSTGRES_DB: cantica
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cantica -d cantica"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ../cantica-api
+    ports:
+      - "8042:8042"
+    volumes:
+      - cantica_data:/data
+    environment:
+      CANTICA_VAULT_PATH: /data
+      CANTICA_DATABASE_URL: "postgresql+psycopg2://cantica:C%40ntica@postgres:5432/cantica"
+      CANTICA_AUTH_ENABLED: "true"
+      CANTICA_LOG_LEVEL: info
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ./cantica-web
+    ports:
+      - "81:80"
+    depends_on:
+      api:
+        condition: service_started
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  cantica_data:
