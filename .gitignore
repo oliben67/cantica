@@ -17,3 +17,5 @@ atlas-dev.db
 
 # VS Code settings and workspace files
 .vscode/
+research/
+tools/import_research.py
