@@ -43,7 +43,7 @@ cantica/
 graph TD
     CLI["cantica CLI<br/>push · pull · search · diff"]
     UI["Web UI<br/>React SPA · browse · search"]
-    SDK["songbook / IDEs<br/>cantica:// URIs · SDK · HTTP"]
+    SDK["IDEs / CI<br/>cantica:// URIs · SDK · HTTP"]
     AGENT["AI Agents<br/>MCP tools · cantica:// resources"]
     VSCODE["VSCode Extension<br/>Cantica Studio"]
 

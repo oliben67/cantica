@@ -20,9 +20,6 @@ The metaphor carries through the entire product:
 - Others **fork** and **remix** it
 - Communities **collect** related prompts (collections)
 
-Cantica sits alongside **songbook** in a music-themed product family:
-songbook orchestrates AI agents; cantica is the library of words they speak.
-
 ---
 
 ## What Cantica Is
@@ -92,7 +89,7 @@ User or organization prefix — mirrors GitHub's model:
 
 ### Collection
 A named, curated set of prompts — like a GitHub repo with multiple files,
-or a songbook's agent roster. Collections can be versioned as a unit.
+or a curated agent roster. Collections can be versioned as a unit.
 
 ### Fork
 Copy a prompt into your namespace with full lineage tracked.
@@ -106,7 +103,7 @@ Upstream changes can be pulled in. PRs (prompt requests?) to upstream.
 ┌─────────────────────────────────────────────────────────────────┐
 │  Interfaces                                                       │
 │  ┌──────────────┐   ┌────────────────┐   ┌───────────────────┐  │
-│  │  cantica CLI │   │  Web UI        │   │  songbook / IDEs  │  │
+│  │  cantica CLI │   │  Web UI        │   │  IDEs / Agents    │  │
 │  │  push/pull   │   │  (React SPA)   │   │  cantica:// URIs  │  │
 │  │  search/diff │   │  browse/search │   │  SDK / HTTP       │  │
 │  └──────┬───────┘   └───────┬────────┘   └─────────┬─────────┘  │
@@ -159,7 +156,7 @@ A local Cantica instance can:
 - Serve as a private prompt vault (air-gapped, no cloud required)
 - Mirror selected public namespaces from cantica.dev
 - Push prompts to cantica.dev for community sharing
-- songbook references `cantica://local/...` or `cantica://cantica.dev/...`
+- External tools reference `cantica://local/...` or `cantica://cantica.dev/...`
 
 This mirrors the git remote model: a local repo with optional upstream remotes.
 
@@ -458,21 +455,21 @@ Views:
 
 ---
 
-### Phase 6 — songbook Integration
+### Phase 6 — External Integrations
+
 **Target: 1 week**
 
-Connect Cantica to the songbook FastAPI backend and VSCode extension.
+Make Cantica consumable by external tools, agents, and CI pipelines via the `cantica://` URI scheme and lock files.
 
 Goals:
-- songbook resolves `cantica://` URIs when starting a fleet
-  - Fetches prompt content at specified ref
-  - Caches locally (lock file pinning, like `uv.lock`)
-  - Re-fetches on `--update-prompts` flag
-- songbook CLI: `songbook prompts update` / `songbook prompts lock`
-- VSCode extension: search Cantica from the agent editor inline
-- `CanticaClient` Python SDK (thin wrapper around the REST API)
 
-Songbook config example:
+- External tools resolve `cantica://` URIs to exact prompt content at a given ref
+  - Fetches content and caches locally (lock file pinning, like `uv.lock`)
+- `CanticaClient` Python SDK (thin wrapper around the REST API)
+- VSCode: search Cantica from any agent editor inline
+- MCP server: AI agents use prompts via the Model Context Protocol
+
+Agent config example:
 ```yaml
 agents:
   architect:
@@ -481,7 +478,7 @@ agents:
     system_prompt: cantica://osteck/pr-reviewer@production
 ```
 
-Lock file (`songbook.lock`):
+Lock file (`cantica.lock`):
 ```yaml
 prompts:
   community/senior-architect:
@@ -529,21 +526,25 @@ cantica push upstream osteck/my-prompt             # share with community
 | 3 — Search | Full-text (FTS5), tag/model filters, semantic (pgvector, opt-in) | 2 weeks |
 | 4 — Community | OAuth, stars, forks, comments, collections, discovery | 2 weeks |
 | 5 — Web UI | React SPA: explore, prompt page, diff, editor, profiles | 3 weeks |
-| 6 — songbook Integration | `cantica://` URI resolution, lock file, VSCode search, SDK | 1 week |
+| 6 — External Integrations | `cantica://` URI resolution, lock file, MCP server, SDK | 1 week |
 | 7 — Cloud | Hosted cantica.dev, PostgreSQL, federation, orgs | ongoing |
 
 **MVP (Phases 0–1): 3 weeks** — local vault, CLI, self-hosted  
 **Community-ready (Phases 0–5): ~12 weeks**  
-**songbook-integrated platform (Phases 0–6): ~13 weeks**
+**Integration-ready platform (Phases 0–6): ~13 weeks**
 
 ---
 
-## Relationship to songbook
+## Cantica as a Registry
 
-```
-songbook (fleet orchestrator)
+Cantica is to prompts what PyPI is to Python packages:
+a versioned, searchable, community-maintained registry
+that any tool — AI agents, IDEs, CI pipelines — can pull from.
+
+```text
+Any tool or agent
    │
-   ├── defines agents with system_prompt: cantica://...
+   ├── references prompts via cantica://...
    │
    └── Cantica (prompt registry)
           ├── local instance (self-hosted, private vault)
@@ -551,7 +552,3 @@ songbook (fleet orchestrator)
           └── cantica.dev (cloud, community hub)
                 └── community/ namespace (curated, public)
 ```
-
-Cantica is to prompts what PyPI is to Python packages:
-a versioned, searchable, community-maintained registry
-that any tool (songbook, VSCode, CI pipelines) can pull from.
