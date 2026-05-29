@@ -61,7 +61,9 @@ graph TD
     end
 
     subgraph STUDIO["Studio API (cantica-studio)"]
-        LST["Local VersionStore<br/>no auth · no federation"]
+        RT["ActorRuntime<br/>pykka actors · APScheduler"]
+        CP["CanticaConnector<br/>multi-server prompt proxy"]
+        FS["WorkspaceFS + MCP<br/>read/write/list/search"]
     end
 
     API --> DB
