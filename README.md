@@ -23,15 +23,17 @@ Like npm for Node modules or PyPI for Python packages, but for prompts:
 
 ```
 cantica/
-├── cantica-api/        # FastAPI backend + CLI (Python / uv)
-├── cantica-frontend/   # React SPA (Vite + TypeScript + Tailwind)
+├── cantica-api/        # FastAPI backend + CLI + MCP server (Python / uv)
+├── cantica-web/        # React SPA (Vite + TypeScript + Tailwind)
+├── cantica-studio/     # VSCode extension + lightweight local API
 └── docs/               # Architecture notes and roadmap
 ```
 
 | Sub-project | Repo | Description |
 |---|---|---|
-| [`cantica-api`](https://github.com/oliben67/cantica-api) | Python API | FastAPI server, CLI, VersionStore, BlobStore |
-| [`cantica-frontend`](https://github.com/oliben67/cantica-frontend) | React SPA | Browse, search, and manage prompts in the browser |
+| [`cantica-api`](https://github.com/oliben67/cantica-api) | Python API | FastAPI server, CLI, MCP server, VersionStore, BlobStore |
+| [`cantica-web`](https://github.com/oliben67/cantica-web) | React SPA | Browse, search, and manage prompts in the browser |
+| [`cantica-studio`](https://github.com/oliben67/cantica-studio) | VSCode extension | In-editor prompt browsing, editing, and rendering |
 
 ---
 
@@ -42,16 +44,24 @@ graph TD
     CLI["cantica CLI<br/>push · pull · search · diff"]
     UI["Web UI<br/>React SPA · browse · search"]
     SDK["songbook / IDEs<br/>cantica:// URIs · SDK · HTTP"]
+    AGENT["AI Agents<br/>MCP tools · cantica:// resources"]
+    VSCODE["VSCode Extension<br/>Cantica Studio"]
 
-    CLI -->|HTTP /v1| API
-    UI  -->|HTTP /v1| API
-    SDK -->|HTTP /v1| API
+    CLI   -->|HTTP /v1| API
+    UI    -->|HTTP /v1| API
+    SDK   -->|HTTP /v1| API
+    AGENT -->|HTTP /mcp| API
+    VSCODE -->|HTTP /v1| STUDIO
 
-    subgraph API["FastAPI Backend"]
+    subgraph API["FastAPI Backend (cantica-api)"]
         VS["VersionStore<br/>commits · branches · tags · diffs"]
         BS["BlobStore<br/>content-addressable objects"]
         TE["TemplateEngine<br/>variable rendering · validation"]
-        CS["CommunityService<br/>stars · forks · comments · collections"]
+        MCP["MCP Server<br/>tools · resources · stdio"]
+    end
+
+    subgraph STUDIO["Studio API (cantica-studio)"]
+        LST["Local VersionStore<br/>no auth · no federation"]
     end
 
     API --> DB
@@ -158,6 +168,7 @@ The API is configured via environment variables (prefix `CANTICA_`):
 | `CANTICA_VAULT_PATH` | `./vault` | Path to the prompt vault directory |
 | `CANTICA_PORT` | `8042` | API server port |
 | `CANTICA_AUTH_ENABLED` | `false` | Enable bearer-token authentication |
+| `CANTICA_MCP_API_KEY` | — | API key used by the MCP server's `commit_prompt` tool when auth is enabled |
 | `CANTICA_REMOTE_URL` | — | Remote Cantica instance to federate with |
 
 ---
