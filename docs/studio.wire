@@ -1,0 +1,11 @@
+wireframe clean
+    %title: Cantica Studio
+
+    Card w=300
+        Vertical gap=16 padding=24
+            Label "**Cantica Studio**"
+            TextInput "Enter your name" :txtName required
+            Button "Get Started" primary
+        /Vertical
+    /Card
+/wireframe
