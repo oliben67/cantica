@@ -125,6 +125,40 @@ Cron fires (_run closure) → proxy.instruct(prompt) → actor LLM response
 
 ---
 
+## Regression 6 — Copilot 'auto' model never resolves in the UI
+
+**Commit fixed:** `[studio-api, post-49f4ac4]`
+**Symptom:** An AI actor configured with provider=`copilot` and model=`auto` shows a spinner indefinitely in the UI. The model badge never shows the actual model name chosen by Copilot.
+
+**Root cause — missing endpoint:** The client polled `GET /v1/runtime/actors/{name}/model` every 2 s to discover the resolved model. This endpoint did not exist, so every poll 404'd. `fetchResolvedModel` in `studio-client.ts` returns `null` on non-OK responses, so the spinner persisted silently.
+
+**Root cause — missing instruct response field:** `instruct_actor` never included `resolved_model` in its response. The `instructActor` client reads `data.resolved_model` from the response, but the server never set it.
+
+**Root cause — `_ActorState` didn't track provider:** `get_resolved_model()` needed a reference to the provider object (where `resolved_model` is set as an instance attribute after `_run_sdk` completes). `_ActorState` had no `provider` field, so there was nowhere to read it.
+
+**Root cause — unhandled `KeyError` in `instruct_actor`:** After adding `get_resolved_model(name)` to `instruct_actor`, the call was placed OUTSIDE the `try/except` block. If the actor stopped between the `instruct` call and the `get_resolved_model` call (race), FastAPI would return 500 — breaking instruction responses entirely.
+
+**Fix:**
+- Added `provider: Any | None = None` field to `_ActorState`; `_start_ai_actor` stores `main_provider` there.
+- Added `get_resolved_model(name)` method to `ActorRuntime` that reads `getattr(state.provider, "resolved_model", None)`.
+- Added `GET /v1/runtime/actors/{name}/model` endpoint; returns `{"name": name, "resolved_model": <str|null>}`.
+- `instruct_actor` now reads `get_resolved_model` and includes it in the response when set.
+- Wrapped the `get_resolved_model` call in `instruct_actor` in its own `try/except Exception: pass` — resolution failure is non-fatal; the poll endpoint remains as the fallback.
+
+**How resolution actually works:**
+1. Actor starts → client calls `pollResolvedModel(name)` (polls `/model` every 2 s for up to 60 s).
+2. User sends first instruction → Copilot SDK runs `_run_sdk` → SDK fires `AssistantUsageData` event with `model` field → `captured_model` is set → `provider.resolved_model = captured_model`.
+3. `instruct_actor` reads `resolved_model` from the provider and includes it in the response — the webview shows the model immediately.
+4. Concurrently, the next poll also finds `resolved_model` set and posts `actorModelResolved`.
+
+**Invariants to preserve:**
+- `_ActorState.provider` must always be set to `main_provider` for AI actors (and `None` for code actors).
+- Any code path that calls `get_resolved_model()` from an endpoint should wrap it in `try/except` — it's always non-fatal (model badge can update from polling).
+- Do NOT call `probe_resolved_model()` at actor startup in a background thread — it opens a concurrent Copilot CLI session alongside the actor's main SDK session, risking duplicate function-call ID errors (see Regression 5).
+- The `pollResolvedModel` window is 30 × 2 s = 60 s. The model WILL appear in the `instruct_actor` response after the first successful instruction even if the poll window has closed.
+
+---
+
 ## Quick checklist before touching actor/event/cron code
 
 - [ ] Does anything call `stop_all()` outside the process-exit lifespan? → Don't. Use `stop(name)` per actor.
