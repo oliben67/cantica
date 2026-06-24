@@ -159,6 +159,27 @@ Cron fires (_run closure) → proxy.instruct(prompt) → actor LLM response
 
 ---
 
+## Regression 7 — Server-down leaves actors showing as running with prompting enabled
+
+**Commit fixed:** `[pending]`
+**Symptom:** The studio-api process crashes, is stopped, or the container is restarted. All songbook panels still display actors with their previous running state (green badges, active chat panels) and the instruction input remains enabled. Typing a prompt and submitting it either hangs or returns a network error with no visible feedback. The user has no indication the server is down and cannot tell whether their prompt was delivered.
+
+**Root cause:** The extension holds actor state in memory (the actors-panel webview) that is populated when the server is reachable. There is no liveness feedback loop: the 3-second notification poll (`/v1/runtime/notifications`) silently swallows connection errors and does not propagate server-down status to the webview. The webview receives no `actorStatus` message telling it actors are stopped, so it continues rendering them as running. The instruct input is gated only on whether an actor appears running in the local webview state — not on whether the server is actually reachable.
+
+**Fix (required):**
+- When any health poll or notification drain returns a network error (connection refused, timeout), emit `{ type: 'studioStatus', health: 'down', url, version: undefined }` immediately — do not wait for the next scheduled health check.
+- In the webview, a `studioStatus` with `health: 'down'` must set ALL actors to a stopped/unreachable visual state and disable the prompt input for every actor in every open songbook panel. This state must override any cached running state.
+- When the server comes back up (subsequent health check returns `healthy`), re-fetch the actor list and restore the correct running state before re-enabling inputs.
+- The notification poll error path must not be silently swallowed — surface the down state immediately rather than waiting for the health poll interval.
+
+**Invariants to preserve:**
+- The webview's actor running/stopped state must always be derived from confirmed server state, not from stale cached state.
+- Any network error on `/notifications`, `/health`, or any instruct call must trigger an immediate server-down transition in the UI — not just a silent retry.
+- Prompting (the instruction textarea and send button) must be disabled whenever `studioStatus.health !== 'healthy'`, regardless of what the local actor state cache says.
+- When the server recovers, re-query `/v1/runtime/actors/summary` before re-enabling inputs — do not assume all previously running actors are still running.
+
+---
+
 ## Quick checklist before touching actor/event/cron code
 
 - [ ] Does anything call `stop_all()` outside the process-exit lifespan? → Don't. Use `stop(name)` per actor.
