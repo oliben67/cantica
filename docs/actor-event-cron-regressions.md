@@ -228,3 +228,11 @@ Cron fires (_run closure) → proxy.instruct(prompt) → actor LLM response
 - [ ] Does a new `@tool` implementation call `provider.run()`? → Use `_event_provider` to avoid concurrent-session corruption.
 - [ ] Does the MCP `fire_event` or any MCP tool return a `dict`? → Return a `str` (or `list`). Extract `["output"]` from `runtime.fire_event()`.
 - [ ] Adding a new actor lifecycle method that stops actors? → Make sure it doesn't call `stop_all()` or touch the scheduler unless it's a process-exit handler.
+
+## Quick checklist before deploying image / wheel changes
+
+- [ ] Did you rebuild the wheel (`actor_ai-*.whl`) since the last image build? → Run `task build:image` (or `task update`) to pick it up. Docker's layer cache will NOT automatically detect a changed wheel file if the filename is unchanged — use `--no-cache` when in doubt, or run `task clean` first.
+- [ ] Did you change the Dockerfile or studio-api source? → `task build:image` + `task up` (image tag now matches compose). Confirm the running image is fresh: `docker inspect studio-api --format='{{.Created}}'`.
+- [ ] Does the image tag in `task build:image` match the `image:` field in `docker-compose.yml`? → They must be identical. A mismatch means every rebuild is silently ignored (see Regression 8).
+- [ ] Is `GITHUB_TOKEN` set in your shell before `docker compose up`? → Copilot actors require it. Add it to your shell profile if you start the container from a terminal without it.
+- [ ] Are there stale dangling images or old `cantica-studio-api:latest` images wasting space? → Run `task clean` to remove them.
