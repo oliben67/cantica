@@ -180,6 +180,45 @@ Cron fires (_run closure) → proxy.instruct(prompt) → actor LLM response
 
 ---
 
+## Regression 8 — `task build:image` produced the wrong image tag, silently leaving the old container running
+
+**Commit fixed:** `[studio-api/Taskfile.yml, 2026-06-24]`
+**Symptom:** After running `task build:image` + `task down` + `task up`, the container continues to exhibit bugs that were supposedly fixed in the new image. Code changes to the studio-api runtime, wheel, or Dockerfile appear to have no effect.
+
+**Root cause:** `task build:image` built the image tagged `cantica-studio-api:latest`. The `docker-compose.yml` declares `image: studio-api:latest`. These are two different image names. `docker compose up -d` (`task up`) starts from `studio-api:latest` — the old image. The freshly built `cantica-studio-api:latest` is never used by the compose stack. Every rebuild silently produced the wrong tag, and the running container was never updated.
+
+**Fix:** Changed `task build:image` to tag the image as `studio-api:latest` (matching the compose `image:` field). Now `task build:image` + `task up` correctly updates the running container.
+
+**Invariants to preserve:**
+
+- The image tag in `task build:image` (`-t <name>`) must exactly match the `image:` field in `docker-compose.yml`. Keep them in sync whenever either file is changed.
+- After any Dockerfile or wheel change, always verify the new image is actually running: `docker inspect studio-api --format='{{.Created}}'` should show a time after your build.
+- If the compose stack has a `build:` section, `docker compose up --build` also rebuilds correctly and is the safest way to guarantee the latest image is used.
+
+---
+
+## Regression 9 — Copilot actor start fails with 500 due to unguarded keyring call and no GITHUB_TOKEN in container
+
+**Commit fixed:** `[studio-api/docker-compose.yml + actor_ai wheel rebuild, 2026-06-24]`
+**Symptom:** Starting any actor with `provider=copilot` returns HTTP 500: `{"detail":"No recommended backend was available. Install a recommended 3rd party backend package; or, install the keyrings.alt package if you want to use the non-recommended backends."}`. No actor is created. No traceback appears in container logs (FastAPI catches and serialises the exception as the 500 detail).
+
+**Root cause — missing GITHUB_TOKEN:** The container has no `GITHUB_TOKEN` environment variable and no OS keyring backend (headless Linux, no D-Bus/secretstorage). `_resolve_github_token(None)` exhausts all four sources (explicit key → env var → `gh auth token` → keyring) and reaches `keyring.get_password()`. The `keyring` package raises `NoKeyringError` when no backend is installed.
+
+**Root cause — unguarded keyring call in installed wheel:** The installed `actor_ai` wheel at the time had `keyring.get_password()` called OUTSIDE a `try/except` block at the bottom of `_token_from_keyring()`. The `except Exception:` wrapper was present in the source and the rebuilt wheel, but the container had been built from an OLDER wheel (via Docker's build cache, compounded by Regression 8 so the image was never actually updated). The unguarded call let `NoKeyringError` propagate all the way through `_make_provider` → `_start_ai_actor` → `start_actor` endpoint → `raise HTTPException(status_code=500, detail=str(exc))`.
+
+**Fix:**
+
+1. Added `GITHUB_TOKEN: "${GITHUB_TOKEN:-}"` to `docker-compose.yml` so the host's GitHub token is forwarded into the container. `_resolve_github_token` returns the token from the env var before reaching the keyring — the keyring is never called.
+2. Rebuilt the image with `--no-cache` so the updated wheel (with `except Exception:` around `keyring.get_password()`) is installed.
+
+**Invariants to preserve:**
+
+- `GITHUB_TOKEN` must always be available in the container for Copilot actors to authenticate. Keep `GITHUB_TOKEN: "${GITHUB_TOKEN:-}"` in `docker-compose.yml` and ensure the host env var is set before running `docker compose up`.
+- `_token_from_keyring()` in `actor_ai/providers/openai.py` must wrap `keyring.get_password()` in `try/except Exception: pass`. Any edit to that function must preserve this guard — the keyring backend is never guaranteed to be present.
+- When rebuilding the actor-ai wheel (or any dependency wheel), rebuild the Docker image with `--no-cache` or `docker compose up --build` to ensure the new wheel is installed. Docker build cache can preserve old wheel installs even if the wheel file on disk has changed.
+
+---
+
 ## Quick checklist before touching actor/event/cron code
 
 - [ ] Does anything call `stop_all()` outside the process-exit lifespan? → Don't. Use `stop(name)` per actor.
