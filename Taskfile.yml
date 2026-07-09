@@ -31,7 +31,7 @@ tasks:
     desc: Auto-fix all lint issues and reformat across API and frontend
     cmds:
       - task: api:fix
-      - task: web:lint:fix
+      - task: web:fix
       - task: studio:fix
 
   dev:
