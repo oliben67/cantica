@@ -18,7 +18,7 @@ services:
 
   api:
     build:
-      context: ../cantica-api
+      context: ./cantica-api
     ports:
       - "8042:8042"
     volumes:

@@ -1,12 +1,12 @@
-[submodule "cantica-api"]
-	path = cantica-api
-	url = /home/osteck/Sources/cantica-api
-[submodule "cantica-frontend"]
-	path = cantica-frontend
-	url = ../cantica-frontend
-[submodule "cantica-web"]
-	path = cantica-web
-	url = /home/osteck/Sources/cantica-project/cantica-web
 [submodule "cantica-studio"]
 	path = cantica-studio
-	url = /home/osteck/Sources/cantica-project/cantica-studio
+	url = git@github.com:oliben67/cantica-studio
+[submodule "cantica-api"]
+	path = cantica-api
+	url = git@github.com:oliben67/cantica-api
+[submodule "actor-ai"]
+	path = actor-ai
+	url = git@github.com:oliben67/actor-ai
+[submodule "cantica-web"]
+	path = cantica-web
+	url = git@github.com:oliben67/cantica-web
