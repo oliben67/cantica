@@ -10,3 +10,6 @@
 [submodule "cantica-web"]
 	path = cantica-web
 	url = git@github.com:oliben67/cantica-web
+[submodule "cantica-secure"]
+	path = cantica-secure
+	url = git@github.com:oliben67/cantica-secure.git
