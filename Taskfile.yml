@@ -11,6 +11,9 @@ includes:
   studio:
     taskfile: ./cantica-studio/Taskfile.yml
     dir: ./cantica-studio
+  secure:
+    taskfile: ./cantica-secure/Taskfile.yml
+    dir: ./cantica-secure
 
 # ── Default ────────────────────────────────────────────────────────────────
 tasks:
@@ -26,6 +29,7 @@ tasks:
       - task: api:check
       - task: web:check
       - task: studio:check
+      - task: secure:check
 
   fix:
     desc: Auto-fix all lint issues and reformat across API and frontend
@@ -46,6 +50,7 @@ tasks:
       - task: api:ci
       - task: web:ci
       - task: studio:ci
+      - task: secure:ci
 
   # ── Docker Compose ───────────────────────────────────────────────────────
 
@@ -106,6 +111,7 @@ tasks:
       - task: api:clean
       - task: web:clean
       - task: studio:clean
+      - task: secure:clean
 
   clean:all:
     desc: Remove everything including venvs and node_modules across all sub-projects
@@ -113,3 +119,4 @@ tasks:
       - task: api:clean:all
       - task: web:clean:all
       - task: studio:clean:all
+      - task: secure:clean:all
