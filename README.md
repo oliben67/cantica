@@ -21,19 +21,25 @@ Like npm for Node modules or PyPI for Python packages, but for prompts:
 
 ## Monorepo structure
 
+The repository is a set of git submodules orchestrated from the root Taskfile.
+
 ```
 cantica/
+├── actor-ai/           # Multi-provider AI actor framework (Python / uv)
 ├── cantica-api/        # FastAPI backend + CLI + MCP server (Python / uv)
 ├── cantica-web/        # React SPA (Vite + TypeScript + Tailwind)
-├── cantica-studio/     # VSCode extension + lightweight local API
-└── docs/               # Architecture notes and roadmap
+├── cantica-studio/     # VSCode extension + Electron app + Studio API
+├── cantica-secure/     # Shared security package: FastAPI shim + React forms
+└── docs/               # Architecture notes, specs, and roadmaps
 ```
 
 | Sub-project | Repo | Description |
 |---|---|---|
+| [`actor-ai`](https://github.com/oliben67/actor-ai) | Python library | Multi-provider AI actor framework (Claude, GPT, Gemini, Mistral, Copilot) used by the Studio API |
 | [`cantica-api`](https://github.com/oliben67/cantica-api) | Python API | FastAPI server, CLI, MCP server, VersionStore, BlobStore |
 | [`cantica-web`](https://github.com/oliben67/cantica-web) | React SPA | Browse, search, and manage prompts in the browser |
-| [`cantica-studio`](https://github.com/oliben67/cantica-studio) | VSCode extension | In-editor prompt browsing, editing, and rendering |
+| [`cantica-studio`](https://github.com/oliben67/cantica-studio) | VSCode extension + Electron app | In-editor actor graphs, prompt browsing/editing, and the Studio API server |
+| [`cantica-secure`](https://github.com/oliben67/cantica-secure) | Python + npm package | Shimmable auth/authorization core and themeable React forms shared by both servers |
 
 ---
 
@@ -61,9 +67,18 @@ graph TD
     end
 
     subgraph STUDIO["Studio API (cantica-studio)"]
-        RT["ActorRuntime<br/>pykka actors · APScheduler"]
+        RT["ActorRuntime<br/>actor-ai actors · APScheduler"]
         CP["CanticaConnector<br/>multi-server prompt proxy"]
         FS["WorkspaceFS + MCP<br/>read/write/list/search"]
+    end
+
+    API -.->|optional shim| SEC
+    STUDIO -.->|optional shim| SEC
+
+    subgraph SEC["Cantica Secure (cantica-secure)"]
+        AUTH["Auth core<br/>login · invitations · key enrolment · assertions"]
+        RBAC["Users · roles · flags · directory mappings"]
+        UI["@cantica/secure-ui<br/>themeable React forms"]
     end
 
     API --> DB
@@ -93,7 +108,8 @@ graph TD
 |---|---|---|
 | [Python](https://python.org) | ≥ 3.14 | API runtime |
 | [uv](https://docs.astral.sh/uv/) | latest | Python package manager |
-| [Node.js](https://nodejs.org) | ≥ 20 | Frontend toolchain |
+| [Node.js](https://nodejs.org) | ≥ 20 | Frontend / VSCode / Electron toolchain |
+| [Docker](https://docker.com) | latest | Compose stack + Studio API container |
 | [Task](https://taskfile.dev) | ≥ 3.28 | Task runner |
 | [Atlas](https://atlasgo.io) | latest | Database migrations |
 
@@ -106,9 +122,8 @@ graph TD
 git clone --recurse-submodules git@github.com:oliben67/cantica.git
 cd cantica
 
-# 2. Install all dependencies
-task api:install      # Python deps (uv)
-task ui:install       # npm deps
+# 2. Install everything (Python + npm across all sub-projects)
+task install          # or per project: task api:install, task web:install, …
 
 # 3. Start the full development environment
 task dev              # API + frontend concurrently
@@ -121,43 +136,57 @@ at `http://localhost:5173` (proxying `/v1` to the API).
 
 ## Available tasks
 
-Run `task` at the repo root to list all tasks. The root orchestrates both
-sub-projects; sub-project tasks are namespaced `api:*` and `ui:*`.
+Run `task` at the repo root to list everything. Each sub-project is included
+under its own namespace — `actor:*`, `api:*`, `web:*`, `studio:*`, `secure:*` —
+and every one exposes the same **canonical verbs**, so the root aggregates fan
+out uniformly.
 
-### Root tasks
+### Canonical verbs (every sub-project)
+
+| Verb | Description |
+|---|---|
+| `install` | Install dependencies |
+| `test` | Run the test suite (Python suites enforce ≥ 99 % coverage) |
+| `build` | Build the artefact (wheel / bundle / extension / library) |
+| `check` | All quality gates (lint · format · typecheck · test, where applicable) |
+| `ci` | Frozen-install CI pipeline |
+| `clean` / `clean:all` | Remove artefacts / also remove venv + node_modules |
+
+Example: `task api:test`, `task web:build`, `task secure:check`,
+`task studio:test`.
+
+### Root aggregates
 
 | Task | Description |
 |---|---|
-| `task dev` | Start API + frontend concurrently |
-| `task check` | Run all quality gates (API + frontend) |
-| `task fix` | Auto-fix lint across API + frontend |
+| `task install` | Install every sub-project |
+| `task test` | Run every sub-project's tests |
+| `task check` | Run every sub-project's quality gates |
+| `task fix` | Auto-fix lint + format across projects that support it |
 | `task ci` | Full CI pipeline for all sub-projects |
-| `task clean` | Remove build artefacts across all sub-projects |
-| `task clean:all` | Deep clean including venv and node_modules |
+| `task dev` | Start API + frontend concurrently |
+| `task clean` / `task clean:all` | Clean all sub-projects |
 
-### API tasks (`api:*`)
-
-| Task | Description |
-|---|---|
-| `task api:install` | Sync Python deps with uv |
-| `task api:test` | Full test suite with coverage (≥ 99 %) |
-| `task api:test:fast` | Tests without coverage |
-| `task api:lint` | Ruff lint check |
-| `task api:format` | Ruff format |
-| `task api:typecheck` | Mypy type check |
-| `task api:serve` | Dev server with auto-reload |
-| `task api:db:new -- <name>` | Plan a new migration |
-| `task api:db:apply -- <url>` | Apply pending migrations |
-
-### Frontend tasks (`ui:*`)
+### Docker orchestration (root)
 
 | Task | Description |
 |---|---|
-| `task ui:install` | Install npm dependencies |
-| `task ui:dev` | Start Vite dev server |
-| `task ui:build` | Production build |
-| `task ui:lint` | ESLint |
-| `task ui:preview` | Preview production build |
+| `task up` / `task down` | Start / stop the Compose stack (postgres · api · web) |
+| `task build` | Build all Docker images (⚠ this is Compose image build, not sub-project builds) |
+| `task rebuild` | No-cache image rebuild + restart |
+| `task logs` / `task ps` | Follow logs / show container status |
+
+### Notable per-project tasks
+
+| Task | Description |
+|---|---|
+| `task api:serve` | Cantica API dev server with auto-reload |
+| `task api:db:new -- <name>` | Plan a new Atlas migration |
+| `task web:dev` | Start the Vite dev server |
+| `task studio:app` | Build and launch the Cantica Studio Electron app |
+| `task studio:vscode:install:vsix` | Package + install the VSCode extension |
+| `task secure:wheel:publish` | Build the cantica-secure wheel to the repo root (for Docker) |
+| `task secure:contract:freeze` | Re-freeze the security API contract |
 
 ---
 
@@ -172,6 +201,36 @@ The API is configured via environment variables (prefix `CANTICA_`):
 | `CANTICA_AUTH_ENABLED` | `false` | Enable bearer-token authentication |
 | `CANTICA_MCP_API_KEY` | — | API key used by the MCP server's `commit_prompt` tool when auth is enabled |
 | `CANTICA_REMOTE_URL` | — | Remote Cantica instance to federate with |
+| `CANTICA_SECURITY_SHIM` | `false` | Serve auth via the shared **Cantica Secure** shim (see below) |
+
+The Studio API is configured with the `STUDIO_` prefix (`STUDIO_LOCAL_MODE`,
+`STUDIO_SECURITY_SHIM`, `STUDIO_JWT_SECRET`, LDAP/OIDC settings, …).
+
+---
+
+## Security & multi-user (remote mode)
+
+Both servers run **single-user by default** (`local_mode` — auth disabled, one
+synthetic admin). Setting them to **remote mode** unlocks invitation-based
+multi-user access:
+
+- **Registration by invitation** — enterprise (LDAP / OIDC directory
+  provisioning with group→role mapping) or self-service, with an admin
+  activation step for new (`newbie`) accounts.
+- **Key-based authentication** — clients enrol an RSA key pair; a key-signed
+  assertion is exchanged for a short-lived session token. Private keys never
+  leave the client.
+- **Roles, permissions, and moderation flags** — a per-request gate so a
+  `blocked` flag or deactivation invalidates live tokens immediately;
+  `warning` flags surface via the `X-Cantica-Warning` header.
+
+This logic lives once in **[`cantica-secure`](cantica-secure/)** — a shimmable
+FastAPI package plus a themeable React form library (`@cantica/secure-ui`) —
+and both servers mount it behind the `*_SECURITY_SHIM` flag. cantica-web serves
+the admin screens at `/admin/security`; the Studio clients expose them behind
+the toolbar **Security** entry. See
+[docs/roadmap-cantica-secure.md](docs/roadmap-cantica-secure.md) for the
+extraction design and status.
 
 ---
 
@@ -198,10 +257,20 @@ task api:db:new -- add_tags_index
 
 ## Docs
 
+**Vision & design**
 - [ROADMAP.md](docs/ROADMAP.md) — vision, core concepts, and planned milestones
 - [auth-tokens-api-key-vs-jwt.md](docs/auth-tokens-api-key-vs-jwt.md) — auth design decision
 - [blob-store-custom-vs-git-libraries.md](docs/blob-store-custom-vs-git-libraries.md) — storage design decision
 - [API schema](docs/prompt-metadata-schema.json) — JSON schema for prompt metadata
+
+**Security & multi-user**
+- [remote-mode-registration-auth.md](docs/remote-mode-registration-auth.md) — the registration/authentication spec
+- [roadmap-remote-mode-auth.md](docs/roadmap-remote-mode-auth.md) — in-server remote-mode implementation plan
+- [roadmap-cantica-secure.md](docs/roadmap-cantica-secure.md) — extracting the shared `cantica-secure` package (phases A–F)
+
+**Studio**
+- [roadmap-setup-provider-modals.md](docs/roadmap-setup-provider-modals.md) — in-webview setup / provider-key forms
+- [actor-event-cron-regressions.md](docs/actor-event-cron-regressions.md) — Studio actor/event/cron regression notes
 
 ---
 

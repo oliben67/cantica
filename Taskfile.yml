@@ -26,6 +26,15 @@ tasks:
     cmd: task --list
 
   # ── Combined workflows ────────────────────────────────────────────────────
+  install:
+    desc: Install dependencies for every sub-project (Python + npm)
+    cmds:
+      - task: actor:install
+      - task: api:install
+      - task: web:install
+      - task: studio:install
+      - task: secure:install
+
   test:
     desc: Run every sub-project's test suite
     cmds:
