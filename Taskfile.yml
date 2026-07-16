@@ -2,6 +2,9 @@
 version: '3'
 
 includes:
+  actor:
+    taskfile: ./actor-ai/Taskfile.yml
+    dir: ./actor-ai
   api:
     taskfile: ./cantica-api/Taskfile.yml
     dir: ./cantica-api
@@ -23,17 +26,28 @@ tasks:
     cmd: task --list
 
   # ── Combined workflows ────────────────────────────────────────────────────
-  check:
-    desc: Run all quality gates across API and frontend
+  test:
+    desc: Run every sub-project's test suite
     cmds:
+      - task: actor:test
+      - task: api:test
+      - task: web:test
+      - task: studio:test
+      - task: secure:test
+
+  check:
+    desc: Run all quality gates across every sub-project
+    cmds:
+      - task: actor:check
       - task: api:check
       - task: web:check
       - task: studio:check
       - task: secure:check
 
   fix:
-    desc: Auto-fix all lint issues and reformat across API and frontend
+    desc: Auto-fix all lint issues and reformat across every sub-project
     cmds:
+      - task: actor:fix
       - task: api:fix
       - task: web:fix
       - task: studio:fix
@@ -47,6 +61,7 @@ tasks:
   ci:
     desc: Full CI pipeline for all sub-projects
     cmds:
+      - task: actor:ci
       - task: api:ci
       - task: web:ci
       - task: studio:ci
@@ -108,6 +123,7 @@ tasks:
   clean:
     desc: Remove build artefacts and caches across all sub-projects
     cmds:
+      - task: actor:clean
       - task: api:clean
       - task: web:clean
       - task: studio:clean
@@ -116,6 +132,7 @@ tasks:
   clean:all:
     desc: Remove everything including venvs and node_modules across all sub-projects
     cmds:
+      - task: actor:clean:all
       - task: api:clean:all
       - task: web:clean:all
       - task: studio:clean:all
